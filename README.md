@@ -25,12 +25,16 @@ Copy-Item .env.example .env
 Edita `.env` y coloca tus variables de n8n y Supabase:
 
 ```env
-SENTINEL_N8N_WEBHOOK_URL=http://localhost:5678/webhook/sentinel-event
+SENTINEL_N8N_WEBHOOK_URL=http://localhost:5678/webhook/sentinel-analysis
 SUPABASE_URL=https://PROJECT_REF.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=SERVICE_ROLE_KEY
 DATABASE_URL=postgres://prisma.PROJECT_REF:PRISMA_PASSWORD@REGION.pooler.supabase.com:5432/postgres
 DIRECT_URL=postgres://postgres.PROJECT_REF:DB_PASSWORD@REGION.pooler.supabase.com:5432/postgres
 ```
+
+Usa `/webhook/sentinel-analysis` con el workflow activo en n8n. La ruta
+`/webhook-test/sentinel-analysis` solo responde cuando el nodo Webhook esta en
+`Listen for test event`.
 
 Antes de ejecutar el agente contra Supabase, crea las tablas con Prisma:
 
@@ -143,10 +147,10 @@ SENTINEL_CLASSES=person,car,backpack,cell phone,knife
 
 En n8n crea un workflow simple:
 
-1. Nodo `Webhook`.
+1. Importa `n8n/AgenteAnalisis.workflow.json` o crea un nodo `Webhook`.
 2. Metodo `POST`.
-3. Ruta `sentinel-event`.
-4. Nodo de almacenamiento o alerta.
+3. Ruta `sentinel-analysis`.
+4. Nodos de analisis, almacenamiento o alerta.
 
 El agente enviara un JSON similar a:
 
@@ -156,9 +160,25 @@ El agente enviara un JSON similar a:
   "confianza": 0.91,
   "hora": "2026-05-26T20:30:00.000000+00:00",
   "camara": "PC-01",
-  "riesgo": "medio",
+  "riesgo": "bajo",
   "box": [10, 20, 200, 300],
-  "imagen": null
+  "imagen": null,
+  "contexto": {
+    "zona": "sin_zona",
+    "iluminacion": "desconocida",
+    "cantidad_personas": 1
+  },
+  "tracking": {
+    "person_id": "person_0001",
+    "track_id": "person_0001",
+    "velocidad": 0,
+    "permanencia_segundos": 0,
+    "movimiento_erratico": false
+  },
+  "memoria": {
+    "eventos_previos_24h": 0,
+    "alertas_previas_24h": 0
+  }
 }
 ```
 

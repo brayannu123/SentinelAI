@@ -17,6 +17,9 @@ class DetectionEvent:
     riesgo: str
     box: tuple[int, int, int, int]
     imagen: str | None = None
+    contexto: dict | None = None
+    tracking: dict | None = None
+    memoria: dict | None = None
 
     @classmethod
     def from_detection(
@@ -24,6 +27,9 @@ class DetectionEvent:
         detection: Detection,
         camera_name: str,
         image_path: str | None = None,
+        contexto: dict | None = None,
+        tracking: dict | None = None,
+        memoria: dict | None = None,
     ) -> "DetectionEvent":
         return cls(
             objeto=detection.label,
@@ -33,10 +39,14 @@ class DetectionEvent:
             riesgo=risk_for_label(detection.label),
             box=detection.box,
             imagen=image_path,
+            contexto=contexto,
+            tracking=tracking,
+            memoria=memoria,
         )
 
     def to_payload(self) -> dict:
-        return asdict(self)
+        payload = asdict(self)
+        return {key: value for key, value in payload.items() if value is not None}
 
     def to_supabase_row(self) -> dict:
         return {

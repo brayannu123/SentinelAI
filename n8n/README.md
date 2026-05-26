@@ -14,6 +14,32 @@ Webhook - Evento Percepcion
   -> Responder a AgentePercepcion
 ```
 
+## Flujo IA recomendado
+
+Si usas el flujo visual con Groq como en tu captura, dejalo asi:
+
+```text
+AgentePercepcion_Webhook
+  -> Preparar_Datos
+  -> AgenteAnalisis_IA
+  -> Parsear_JSON_LLM
+  -> guardar / alerta / respuesta
+
+Groq_Chat_Model
+  -> AgenteAnalisis_IA
+```
+
+Codigo para cada nodo:
+
+- `Preparar_Datos`: pega `n8n/code/Preparar_Datos_IA.js`.
+- `AgenteAnalisis_IA`: usa el prompt de sistema de `n8n/code/SYSTEM_PROMPT_AGENTE_ANALISIS_IA.md`.
+- En el campo de entrada del agente IA, envia `{{$json.prompt_ia}}`.
+- `Parsear_JSON_LLM`: pega `n8n/code/Parsear_JSON_LLM.js`.
+
+El nodo IA solo recomienda y explica. El nodo `Parsear_JSON_LLM` valida la respuesta,
+combina IA con reglas y devuelve el JSON final. Asi evitamos que una respuesta mal
+formada del modelo rompa el flujo o tome decisiones sin control.
+
 ## Importar
 
 1. Abre n8n.
@@ -36,7 +62,7 @@ Prueba desde el editor con `Listen for test event`:
 http://localhost:5678/webhook-test/sentinel-analysis
 ```
 
-## Payload minimo
+## Contrato minimo recibido desde la camara
 
 ```json
 {
@@ -49,7 +75,11 @@ http://localhost:5678/webhook-test/sentinel-analysis
 }
 ```
 
-## Payload profesional opcional
+## Contrato enriquecido desde AgentePercepcion
+
+Cuando ejecutas `python -m agente_percepcion.main`, el agente ya envia contexto,
+tracking y memoria. Los archivos `test_payload_*.json` son solo para validar n8n
+sin abrir la camara.
 
 ```json
 {
@@ -61,10 +91,12 @@ http://localhost:5678/webhook-test/sentinel-analysis
   "imagen": null,
   "contexto": {
     "zona": "entrada_principal",
-    "iluminacion": "baja"
+    "iluminacion": "baja",
+    "cantidad_personas": 1
   },
   "tracking": {
-    "person_id": "track_14",
+    "person_id": "person_0001",
+    "track_id": "knife_0001",
     "velocidad": 8.2,
     "permanencia_segundos": 420,
     "movimiento_erratico": true
@@ -94,7 +126,7 @@ http://localhost:5678/webhook-test/sentinel-analysis
     "severidad": "CRITICA",
     "score": 100,
     "score_riesgo": 1.0,
-    "algoritmo": "risk_rules_v1"
+    "algoritmo": "risk_rules_v2"
   },
   "decision": {
     "accion": "ALERTA_CRITICA",
@@ -124,6 +156,10 @@ El objeto `persistencia` ya viene preparado para guardar el evento enriquecido e
   "contexto": {
     "zona": "entrada_principal",
     "iluminacion": "baja"
+  },
+  "tracking": {
+    "person_id": "person_0001",
+    "track_id": "knife_0001"
   }
 }
 ```
@@ -153,6 +189,19 @@ Niveles:
 - `80-100`: `CRITICO`
 
 Importante: una persona o un celular no son sospechosos por si solos. Suben de nivel solo con contexto, tracking, horario, objeto peligroso o historial.
+
+## Como debe quedar en n8n para camara real
+
+1. Importa `n8n/AgenteAnalisis.workflow.json`.
+2. Abre el nodo `Webhook - Evento Percepcion`.
+3. Confirma metodo `POST` y path `sentinel-analysis`.
+4. Guarda el workflow.
+5. Activa el workflow.
+6. En `.env`, usa `SENTINEL_N8N_WEBHOOK_URL=http://localhost:5678/webhook/sentinel-analysis`.
+7. Ejecuta la camara con `python -m agente_percepcion.main`.
+
+No uses `/webhook-test/sentinel-analysis` con la camara real salvo que tengas el
+editor de n8n abierto esperando un unico evento de prueba.
 
 ## Pruebas con curl
 

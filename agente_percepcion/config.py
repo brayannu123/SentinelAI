@@ -31,6 +31,9 @@ class Settings:
     confidence: float
     classes: set[str]
     event_cooldown_seconds: float
+    tracking_iou_threshold: float
+    scene_zone: str
+    scene_lighting: str
     supabase_url: str | None
     supabase_service_role_key: str | None
     supabase_detection_events_table: str
@@ -49,6 +52,9 @@ def get_settings() -> Settings:
         confidence=float(os.getenv("SENTINEL_CONFIDENCE", "0.5")),
         classes=_classes(os.getenv("SENTINEL_CLASSES", "person")),
         event_cooldown_seconds=float(os.getenv("SENTINEL_EVENT_COOLDOWN_SECONDS", "5")),
+        tracking_iou_threshold=float(os.getenv("SENTINEL_TRACKING_IOU_THRESHOLD", "0.25")),
+        scene_zone=os.getenv("SENTINEL_SCENE_ZONE", "sin_zona"),
+        scene_lighting=os.getenv("SENTINEL_SCENE_LIGHTING", "desconocida"),
         supabase_url=os.getenv("SUPABASE_URL", "").strip() or None,
         supabase_service_role_key=os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip() or None,
         supabase_detection_events_table=os.getenv(
